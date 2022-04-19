@@ -6,7 +6,7 @@ import pandas as pd
 import logging
 
 
-def workflow(data_filepath, summary_file_name, receipts_filepath, log_filepath, mop_name = None):
+def workflow(data_filepath,mop_name, receipts_filepath, log_filepath):
     """Processes entire workflow to generate summary data for Digital Dining reports.
 
     Reads files; cleans; summarizes by MOP; generates log files to confirm any issues.
@@ -35,10 +35,8 @@ def workflow(data_filepath, summary_file_name, receipts_filepath, log_filepath, 
 
     logger.addHandler(fh)
 
-
-
     ## Read all columns from file (incl. empty columns)
-    df = pd.read_excel(data_filepath, engine = 'xlrd',  skiprows = 2)
+    df = pd.read_excel(data_filepath,  skiprows = 2)
 
     ## Shifting label names one to the right and drop extra column
     df.columns = ['Label', *df.columns[:-1]]
@@ -104,7 +102,22 @@ def workflow(data_filepath, summary_file_name, receipts_filepath, log_filepath, 
         summary = summary.rename(columns = {'index':'Outlet'})
         summary = summary.set_index(['Payment', 'Outlet'])
 
-    summary.to_excel(summary_file_name)
+    # summary.to_excel(summary_file_name)
+
+    try:
+            with pd.ExcelWriter('Overall_Results.xlsx',mode = 'a', if_sheet_exists = 'replace') as writer:
+                summary.to_excel(writer, sheet_name = f'{mop_name.upper()}')
+            
+            # with pd.ExcelWriter('Overall_Results.xlsx',mode = 'a', if_sheet_exists = 'overlay') as writer:
+            #     summary.to_excel(writer, sheet_name = 'Overall Results')
+            
+    except:
+        
+        with pd.ExcelWriter('Overall_Results.xlsx', mode = 'w') as writer:
+            summary.to_excel(writer, sheet_name = f'{mop_name.upper()}')
+        
+        # with pd.ExcelWriter('Overall_Results.xlsx',mode = 'w') as writer:
+        #         summary.to_excel(writer, sheet_name = 'Overall Results')
 
     ra_rc_df = pd.read_excel(io = receipts_filepath, header = None, skiprows = 1,
                         names = ['Table #', 'Check #', 'Server #', 'Server Name', 'Cashier #',

@@ -72,8 +72,9 @@ def workflow(data_filepath, summary_file_name, receipts_filepath, log_filepath, 
     df_daily = df_all_cols[daily_rows]
 
     ## Converting data to "float"
-    for col in df_daily.columns:
-        df_daily.loc[:,col] = pd.to_numeric(df_daily.loc[:,col], downcast = 'float')
+    # for col in df_daily.columns:
+    #     df_daily.loc[:,col] = pd.to_numeric(df_daily.loc[:,col], downcast = 'float')
+    df_daily = df_daily.applymap(lambda x: float(x))
 
     ## Summarize food charges by outlet
     daily_food = df_daily['Food'] + df_daily['Other'] - df_daily['Discount']
@@ -103,7 +104,7 @@ def workflow(data_filepath, summary_file_name, receipts_filepath, log_filepath, 
         summary = summary.rename(columns = {'index':'Outlet'})
         summary = summary.set_index(['Payment', 'Outlet'])
 
-    # summary.to_excel(summary_file_name, engine = 'openpyxl')
+    summary.to_excel(summary_file_name)
 
     ra_rc_df = pd.read_excel(io = receipts_filepath, header = None, skiprows = 1,
                         names = ['Table #', 'Check #', 'Server #', 'Server Name', 'Cashier #',
@@ -124,15 +125,15 @@ def workflow(data_filepath, summary_file_name, receipts_filepath, log_filepath, 
 
     return summary
 
-def loop_workflow(data_filepath, summary_file_name, receipts_filepath, log_filepath):
-
+def loop_workflow(summary_file_name, receipts_filepath, log_filepath):
     
     list_mops = ['ag', 'rc', 'ax', 'ca', 'di', 'vimc']
     new_results = []
     for mop in list_mops:
         file_path = f'./data/02_25_2022_mop_det_{mop}.xls'
         summary_file_name = f'results_for_{mop}.xlsx'
-        new_results.append(workflow(data_filepath, summary_file_name, receipts_filepath, log_filepath))
+        new_results.append(workflow(data_filepath = file_path, summary_file_name = summary_file_name,
+                                    receipts_filepath = receipts_filepath, log_filepath = log_filepath))
         
     new_results_df = pd.concat(new_results)
 
